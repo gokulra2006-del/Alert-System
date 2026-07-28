@@ -494,7 +494,7 @@ export default function IncidentCard({
               }
               setLoadingPlan(true);
               try {
-                const res = await fetch('http://localhost:3001/api/ai/action-plan', {
+                const res = await fetch('/api/ai/action-plan', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ incident }),

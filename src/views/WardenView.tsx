@@ -92,7 +92,7 @@ export default function WardenView() {
         zone: i.zone,
         description: i.description
       }));
-      const res = await fetch('http://localhost:3001/api/ai/summarize', {
+      const res = await fetch('/api/ai/summarize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ incidentsData: activeData })

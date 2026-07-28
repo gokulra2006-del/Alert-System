@@ -122,7 +122,7 @@ export default function ReportDrawer({ isOpen, onClose }: Props) {
     
     // Attempt AI Classification
     try {
-      const res = await fetch('http://localhost:3001/api/ai/classify', {
+      const res = await fetch('/api/ai/classify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reportText: description.trim() })
