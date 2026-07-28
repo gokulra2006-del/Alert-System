@@ -4,7 +4,7 @@ import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from './firebase';
 import {
   Incident, BroadcastMessage, Zone, ZoneId, BuildingStatus,
-  generateId, ZONES as INITIAL_ZONES, User, CheckInRecord, DEMO_USERS
+  generateId, ZONES as INITIAL_ZONES, User, CheckInRecord, DEMO_USERS, CheckInRequest
 } from './types';
 
 interface State {

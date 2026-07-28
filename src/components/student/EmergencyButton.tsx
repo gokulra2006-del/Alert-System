@@ -6,6 +6,7 @@ import {
   IncidentType,
   generateId,
   getZoneForLocation,
+  Severity,
 } from '../../types';
 import ConfirmationPulse from './ConfirmationPulse';
 import MediaCapture from './MediaCapture';

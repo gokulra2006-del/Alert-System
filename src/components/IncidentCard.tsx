@@ -41,6 +41,10 @@ const RESOURCE_OPTIONS: Record<IncidentType, { icon: string; label: string }[]> 
     { icon: '👮', label: 'Security Guard' },
     { icon: '🚔', label: 'Police' },
   ],
+  elevator: [
+    { icon: '🔧', label: 'Technician' },
+    { icon: '🚒', label: 'Fire Dept' },
+  ],
   hazmat: [
     { icon: '🧪', label: 'Hazmat Team' },
     { icon: '🚒', label: 'Fire Truck' },

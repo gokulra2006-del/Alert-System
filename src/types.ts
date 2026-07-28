@@ -36,6 +36,7 @@ export interface Incident {
   // Feature 1 — Media capture
   mediaUrl?: string;
   thumbnailUrl?: string;
+  audioUrl?: string;
 
   // Feature 3 — Response timer
   responseStartTime?: number;        // epoch ms, set on Acknowledge

@@ -6,6 +6,7 @@ import {
   IncidentType,
   generateId,
   getZoneForLocation,
+  Severity,
 } from '../types';
 import CampusMap from '../components/CampusMap';
 import SilentSOS from '../components/SilentSOS';
@@ -52,7 +53,7 @@ export default function StudentView() {
 
   const [buttonStates, setButtonStates] = useState<
     Record<IncidentType, ButtonState>
-  >({ fire: 'idle', medical: 'idle', security: 'idle', other: 'idle' });
+  >({ fire: 'idle', medical: 'idle', security: 'idle', other: 'idle', hazmat: 'idle', elevator: 'idle' });
 
   const [pulsingBtn, setPulsingBtn] = useState<IncidentType | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -79,11 +80,13 @@ export default function StudentView() {
       const loc = await getLocation();
       const zone = getZoneForLocation(loc);
 
-      const severityMap: Record<IncidentType, 'high' | 'critical'> = {
+      const severityMap: Record<IncidentType, Severity> = {
         fire: 'critical',
         medical: 'critical',
         security: 'high',
         other: 'medium',
+        hazmat: 'critical',
+        elevator: 'high',
       };
 
       const descMap: Record<IncidentType, string> = {
@@ -91,6 +94,8 @@ export default function StudentView() {
         medical: 'Medical emergency — one-tap dispatch from student',
         security: 'Security alert — one-tap dispatch from student',
         other: 'Incident reported by student',
+        hazmat: 'Hazmat incident reported',
+        elevator: 'Elevator emergency reported',
       };
 
       const incident: Incident = {

@@ -11,6 +11,9 @@ function TopNav() {
   const { state, logout } = useStore();
   const user = state.currentUser;
   
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
   // Close dropdown on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

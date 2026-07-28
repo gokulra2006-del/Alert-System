@@ -1,6 +1,7 @@
 import React from 'react';
 import { Incident } from '../../types';
-import { SAFETY_MARKERS, SafetyMarker } from '../../data/safetyInfrastructure';
+import { SAFETY_MARKERS } from '../../data/safetyInfrastructure';
+import { SafetyMarker } from '../../types';
 import { getDistance } from '../../utils/distance';
 
 interface Props {
@@ -17,13 +18,13 @@ export default function ActionGuideCard({ incident }: Props) {
   let nearestMarker: SafetyMarker | null = null;
   let minDistance = Infinity;
 
-  candidates.forEach(m => {
+  for (const m of candidates) {
     const dist = getDistance(incident.location, { lat: m.lat, lng: m.lng });
     if (dist < minDistance) {
       minDistance = dist;
       nearestMarker = m;
     }
-  });
+  }
 
   const roundedDistance = Math.round(minDistance);
 

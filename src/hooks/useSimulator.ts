@@ -32,6 +32,8 @@ function randLocationInZone(zoneId: ZoneId): { lat: number; lng: number } {
 }
 
 const DESCRIPTIONS: Record<IncidentType, string[]> = {
+  hazmat: [],
+  elevator: [],
   fire: [
     'Smoke visible near stairwell',
     'Fire alarm triggered in lab',
