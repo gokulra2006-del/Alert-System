@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useStore } from '../../store';
 import { IncidentType } from '../../types';
 import MediaCapture from './MediaCapture';
@@ -113,25 +112,26 @@ export default function ActiveEmergencyView({ incidentId, type, onResolve }: Pro
     other: '⚠️'
   };
 
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] bg-[#0a0e1a] flex flex-col animate-fade-in-up overflow-y-auto">
+  return (
+    <div className="w-full flex flex-col animate-fade-in-up overflow-hidden rounded-3xl border border-red-500/20 shadow-2xl mb-8">
       {/* Header */}
-      <div className={`${headerColors[type] || headerColors.other} text-white px-6 py-8 flex flex-col items-center justify-center shadow-lg relative`}>
-        <div className="text-5xl mb-2 animate-bounce">{headerIcons[type] || headerIcons.other}</div>
-        <h1 className="text-2xl font-black uppercase tracking-widest text-center">
-          {type} Emergency Active
+      <div className={`${headerColors[type] || headerColors.other} text-white px-6 py-10 flex flex-col items-center justify-center relative`}>
+        <div className="text-6xl mb-4 drop-shadow-xl animate-bounce">{headerIcons[type] || headerIcons.other}</div>
+        <h1 className="text-2xl font-black uppercase tracking-widest text-center shadow-black drop-shadow-md">
+          {type} Emergency
         </h1>
-        <p className="text-white/80 text-sm mt-2 font-medium">Rescue teams have been dispatched.</p>
+        <p className="text-white/90 text-sm mt-3 font-semibold px-4 py-1.5 bg-black/20 rounded-full backdrop-blur-sm">Rescue teams dispatched</p>
         
         <button 
           onClick={onResolve}
-          className="absolute top-4 right-4 flex items-center gap-1.5 bg-black/20 hover:bg-black/40 text-white rounded-full px-4 py-2 transition-all z-50 backdrop-blur-sm shadow-lg border border-white/20 font-bold tracking-wide"
+          className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 bg-black/20 hover:bg-black/40 text-white rounded-full transition-all z-10 backdrop-blur-sm border border-white/20"
+          title="Dismiss"
         >
-          <span>✕</span> Close
+          <span className="text-sm font-bold">✕</span>
         </button>
       </div>
 
-      <div className="flex-1 p-5 flex flex-col gap-6 max-w-lg mx-auto w-full pb-20 relative">
+      <div className="bg-[#0f1423] p-5 flex flex-col gap-6 w-full relative">
         
         {/* Media Capture Section */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 shadow-xl">
@@ -192,7 +192,6 @@ export default function ActiveEmergencyView({ incidentId, type, onResolve }: Pro
         )}
 
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }
