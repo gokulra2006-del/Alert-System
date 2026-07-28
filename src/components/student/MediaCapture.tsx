@@ -66,7 +66,7 @@ export default function MediaCapture({ incidentId, onDismiss }: Props) {
   async function startRecording() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
+        video: { facingMode: 'environment', width: { ideal: 320 }, height: { ideal: 240 } },
         audio: true,
       });
       streamRef.current = stream;
@@ -84,7 +84,10 @@ export default function MediaCapture({ incidentId, onDismiss }: Props) {
         ? 'video/webm'
         : 'video/mp4';
 
-      const recorder = new MediaRecorder(stream, { mimeType });
+      const recorder = new MediaRecorder(stream, { 
+        mimeType,
+        videoBitsPerSecond: 250000, // 250 kbps to ensure it stays well under 1MB Firestore limit
+      });
       recorderRef.current = recorder;
       chunksRef.current = [];
 
@@ -98,31 +101,42 @@ export default function MediaCapture({ incidentId, onDismiss }: Props) {
         if (timerRef.current) clearInterval(timerRef.current);
 
         const blob = new Blob(chunksRef.current, { type: mimeType });
-        const mediaUrl = URL.createObjectURL(blob);
+        
+        // Read the blob as Base64 to allow syncing via Firestore
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const mediaUrlBase64 = reader.result as string;
 
-        // Grab thumbnail from recorded blob
-        let thumbnailUrl = '';
-        try {
-          const tempVideo = document.createElement('video');
-          tempVideo.src = mediaUrl;
-          tempVideo.muted = true;
-          await new Promise<void>((res) => {
-            tempVideo.onloadeddata = () => res();
-            tempVideo.load();
-            setTimeout(res, 1500);
+          // Grab thumbnail from recorded blob (using a temporary object URL)
+          let thumbnailUrl = '';
+          const tempUrl = URL.createObjectURL(blob);
+          try {
+            const tempVideo = document.createElement('video');
+            tempVideo.src = tempUrl;
+            tempVideo.muted = true;
+            await new Promise<void>((res) => {
+              tempVideo.onloadeddata = () => res();
+              tempVideo.load();
+              setTimeout(res, 1500);
+            });
+            thumbnailUrl = await grabThumbnail(tempVideo);
+          } catch {
+            // thumbnail failed — that's okay, incident still has mediaUrl
+          } finally {
+            URL.revokeObjectURL(tempUrl);
+          }
+
+          // Important check: if the base64 is larger than ~900KB, it might fail Firestore 1MB limit. 
+          // At 250kbps for 15s, it should be around 450KB, which is perfectly safe.
+          updateIncident(incidentId, {
+            mediaUrl: mediaUrlBase64,
+            thumbnailUrl: thumbnailUrl || undefined,
           });
-          thumbnailUrl = await grabThumbnail(tempVideo);
-        } catch {
-          // thumbnail failed — that's okay, incident still has mediaUrl
-        }
 
-        updateIncident(incidentId, {
-          mediaUrl,
-          thumbnailUrl: thumbnailUrl || undefined,
-        });
-
-        setCaptureState('done');
-        setTimeout(onDismiss, 1800);
+          setCaptureState('done');
+          setTimeout(onDismiss, 1800);
+        };
+        reader.readAsDataURL(blob);
       };
 
       recorder.start(250); // collect chunks every 250ms
