@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Body / base ─────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --brand-red: #DC2626;
+  --brand-blue: #2563EB;
+  --brand-amber: #D97706;
+  --bg-base: #0a0e1a;
+  --bg-surface: #111827;
+  --bg-card: #1f2937;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg-base);
+  color: #f1f5f9;
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* ── Leaflet tooltip overrides ────────────────────────────────────────────── */
+.zone-tooltip {
+  background: rgba(10, 14, 26, 0.92) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+  padding: 4px 8px !important;
+}
+.zone-tooltip::before,
+.zone-tooltip::after {
+  display: none !important;
+}
+
+/* Compact inline label — no background/border from Leaflet, we handle it ourselves */
+.zone-label-compact {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+.zone-label-compact::before,
+.zone-label-compact::after {
+  display: none !important;
+}
+
+/* ── SOS pulse (idle floating button) ─────────────────────────────────────── */
+@keyframes sos-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(220,38,38,0.7),  0 4px 24px rgba(0,0,0,0.5); }
+  70%  { box-shadow: 0 0 0 14px rgba(220,38,38,0),   0 4px 24px rgba(0,0,0,0.5); }
+  100% { box-shadow: 0 0 0 0   rgba(220,38,38,0),    0 4px 24px rgba(0,0,0,0.5); }
+}
+
+/* ── Confirmation ring (emergency button success) ─────────────────────────── */
+@keyframes ring-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(34,197,94,0.8); }
+  70%  { box-shadow: 0 0 0 20px rgba(34,197,94,0); }
+  100% { box-shadow: 0 0 0 0   rgba(34,197,94,0); }
+}
+.ring-pulse {
+  animation: ring-pulse 0.6s ease-out 3;
+}
+
+/* ── General UI fade ────────────────────────────────────────────────────────── */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+/* ── Evacuation Path Marching Arrows (Feature 5) ─────────────────────────── */
+@keyframes march {
+  from { stroke-dashoffset: 50; }
+  to   { stroke-dashoffset: 0; }
+}
+.evacuation-path {
+  animation: march 1s linear infinite;
+}
+
+/* ── Active-count blinking badge ──────────────────────────────────────────── */
+@keyframes stat-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+.stat-blink { animation: stat-blink 1.5s ease-in-out infinite; }
+
+/* ── Shimmer for loading emergency button ─────────────────────────────────── */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%);  }
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 5px; }
+::-webkit-scrollbar-track  { background: #111827; }
+::-webkit-scrollbar-thumb  { background: #374151; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+
+/* ── Incident Map Marker Pulse (SVG) ──────────────────────────────────────── */
+@keyframes incident-pulse {
+  0% {
+    stroke-width: 0;
+    stroke-opacity: 1;
+    stroke: currentColor;
+  }
+  100% {
+    stroke-width: 25px;
+    stroke-opacity: 0;
+    stroke: currentColor;
+  }
+}
+.incident-pulse {
+  animation: incident-pulse 1.5s cubic-bezier(0.2, 0, 0.8, 1) infinite;
+  transform-origin: center;
+}
