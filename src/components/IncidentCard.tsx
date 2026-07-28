@@ -133,7 +133,7 @@ function MediaSection({ incident }: { incident: Incident }) {
           {/* Video modal */}
           {modalOpen === 'video' && incident.mediaUrl && createPortal(
             <div
-              className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center backdrop-blur-sm"
+              className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center backdrop-blur-sm"
               onClick={() => setModalOpen(null)}
             >
               <div className="relative" onClick={(e) => e.stopPropagation()}>
@@ -141,6 +141,7 @@ function MediaSection({ incident }: { incident: Incident }) {
                   src={incident.mediaUrl}
                   controls
                   autoPlay
+                  playsInline
                   className="max-w-[90vw] max-h-[80vh] rounded-xl ring-1 ring-gray-700 shadow-2xl"
                 />
                 <button
