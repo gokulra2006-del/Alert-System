@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useStore } from '../store';
 import { useGPS } from '../hooks/useGPS';
+import { useOfflineQueue } from '../hooks/useOfflineQueue';
 import {
   Incident,
   IncidentType,
@@ -18,6 +19,7 @@ interface Props {
 export default function ReportDrawer({ isOpen, onClose }: Props) {
   const { addIncident } = useStore();
   const { getLocation } = useGPS();
+  const { isOnline, queueIncident } = useOfflineQueue();
 
   const [type, setType] = useState<IncidentType>('other');
   const [severity, setSeverity] = useState<Severity>('medium');
@@ -45,7 +47,11 @@ export default function ReportDrawer({ isOpen, onClose }: Props) {
       updatedAt: Date.now(),
     };
 
-    addIncident(incident);
+    if (isOnline) {
+      addIncident(incident);
+    } else {
+      queueIncident(incident);
+    }
     setSubmitting(false);
     setSubmitted(true);
     setTimeout(() => {

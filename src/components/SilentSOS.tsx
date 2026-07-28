@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useStore } from '../store';
 import { useGPS } from '../hooks/useGPS';
+import { useOfflineQueue } from '../hooks/useOfflineQueue';
 import { Incident, generateId, getZoneForLocation } from '../types';
 
 type SOSState = 'idle' | 'holding' | 'submitting' | 'sent';
@@ -12,6 +13,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 export default function SilentSOS() {
   const { addIncident } = useStore();
   const { getLocation } = useGPS();
+  const { isOnline, queueIncident } = useOfflineQueue();
 
   const [sosState, setSOSState] = useState<SOSState>('idle');
   const [progress, setProgress] = useState(0); // 0–1
@@ -77,7 +79,11 @@ export default function SilentSOS() {
       isSOS: true,
     };
 
-    addIncident(incident);
+    if (isOnline) {
+      addIncident(incident);
+    } else {
+      queueIncident(incident);
+    }
     setSOSState('sent');
     setProgress(1);
 

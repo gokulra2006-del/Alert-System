@@ -104,6 +104,19 @@ export interface User {
   passwordHash: string; // Fake hash for demo
   role: Role;
   zone?: ZoneId; // e.g. warden assigned zone, or student registered zone
+  phoneNumber?: string; // for SMS notifications
+}
+
+// ── Audit Trail ────────────────────────────────────────────────────────────────
+export interface TimelineEntry {
+  id: string;
+  action: 'created' | 'acknowledged' | 'escalated' | 'resource_assigned' | 'resolved' | 'merged' | 'updated';
+  actorId: string;
+  actorName: string;
+  timestamp: number;
+  previousStatus?: string;
+  newStatus?: string;
+  notes?: string;
 }
 
 export interface CheckInRecord {

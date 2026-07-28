@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useStore } from '../store';
 import { useGPS } from '../hooks/useGPS';
+import { useOfflineQueue } from '../hooks/useOfflineQueue';
 import {
   Incident,
   IncidentType,
@@ -50,6 +51,7 @@ const EMERGENCY_BUTTONS: EmergencyButtonConfig[] = [
 export default function StudentView() {
   const { state, addIncident, addCheckIn } = useStore();
   const { getLocation } = useGPS();
+  const { isOnline, queuedCount, queueIncident, isFlushing } = useOfflineQueue();
 
   const [buttonStates, setButtonStates] = useState<
     Record<IncidentType, ButtonState>
@@ -106,12 +108,16 @@ export default function StudentView() {
         zone,
         location: loc,
         description: descMap[type],
-        reportedBy: 'Student',
+        reportedBy: state.currentUser?.name || 'Student',
         reportedAt: Date.now(),
         updatedAt: Date.now(),
       };
 
-      addIncident(incident);
+      if (isOnline) {
+        addIncident(incident);
+      } else {
+        queueIncident(incident);
+      }
 
       // Success state + ring pulse
       setButtonStates((prev) => ({ ...prev, [type]: 'success' }));
@@ -122,13 +128,27 @@ export default function StudentView() {
         setPulsingBtn(null);
       }, 3000);
     },
-    [buttonStates, getLocation, addIncident]
+    [buttonStates, getLocation, addIncident, isOnline, queueIncident, state.currentUser]
   );
 
   const activeCount = state.incidents.filter((i) => i.status === 'active').length;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0a0e1a]">
+      {/* Offline / Syncing Status Banner */}
+      {!isOnline && (
+        <div className="sticky top-0 z-40 flex items-center justify-center gap-2 bg-amber-950/90 border-b border-amber-700/60 backdrop-blur py-2 px-4 text-amber-300 text-xs font-semibold">
+          <span className="text-base">📴</span>
+          <span>Offline — reports saved locally, will sync when connection returns{queuedCount > 0 ? ` (${queuedCount} queued)` : ''}</span>
+        </div>
+      )}
+      {isOnline && isFlushing && (
+        <div className="sticky top-0 z-40 flex items-center justify-center gap-2 bg-emerald-950/90 border-b border-emerald-700/60 backdrop-blur py-2 px-4 text-emerald-300 text-xs font-semibold animate-pulse">
+          <span className="text-base">🟢</span>
+          <span>Back Online — syncing {queuedCount} queued report(s) to campus...</span>
+        </div>
+      )}
+
       {/* Title Bar */}
       <header className="bg-gray-900/80 backdrop-blur border-b border-gray-800 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-2">
@@ -144,6 +164,11 @@ export default function StudentView() {
               {activeCount} Active
             </span>
           )}
+          {/* Offline indicator pill */}
+          <span className={`text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1 ${isOnline ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800' : 'bg-amber-950/60 text-amber-400 border border-amber-800'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full inline-block ${isOnline ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+            {isOnline ? 'Online' : 'Offline'}
+          </span>
           <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded-full">
             Student
           </span>
@@ -183,7 +208,7 @@ export default function StudentView() {
             Emergency Response
           </h1>
           <p className="text-gray-400 text-sm mt-0.5">
-            Tap once to instantly alert campus authorities
+            {isOnline ? 'One tap instantly alerts campus authorities' : '📴 Offline mode — reports will sync automatically when you reconnect'}
           </p>
         </div>
 
@@ -224,7 +249,7 @@ export default function StudentView() {
                 </span>
                 <span className="text-[15px] font-bold tracking-wide">
                   {bState === 'success'
-                    ? 'Reported ✓'
+                    ? isOnline ? 'Reported ✓' : '📴 Saved Offline'
                     : bState === 'loading'
                     ? 'Sending…'
                     : btn.label}
@@ -245,7 +270,7 @@ export default function StudentView() {
           className="w-full py-3.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-500 text-gray-300 font-medium rounded-xl transition-all text-sm flex items-center justify-center gap-2"
         >
           <span>📝</span>
-          Report Something Else
+          Report Something Else <span className="text-gray-500">(Hazmat / Other)</span>
         </button>
 
         {/* Live Map */}
@@ -254,7 +279,7 @@ export default function StudentView() {
             <h2 className="text-white font-semibold text-sm">
               🗺️ Live Campus Map
             </h2>
-            <span className="text-xs text-gray-500">Read-only view</span>
+            <span className="text-xs text-gray-500">Read-only</span>
           </div>
           <div 
             className="rounded-xl overflow-hidden ring-1 ring-gray-700 relative"

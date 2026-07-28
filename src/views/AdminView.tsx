@@ -19,6 +19,8 @@ import CampusMap from '../components/CampusMap';
 import IncidentCard from '../components/IncidentCard';
 import AlertBanner from '../components/AlertBanner';
 import SafeCheckPanel from '../components/admin/SafeCheckPanel';
+import AuditView from './AuditView';
+import AnalyticsView from './AnalyticsView';
 
 const TYPE_ICONS: Record<IncidentType, string> = {
   fire: '🔥',
@@ -61,6 +63,7 @@ export default function AdminView() {
     useStore();
 
   const [filter, setFilter] = useState<'all' | IncidentType>('all');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'audit' | 'analytics'>('dashboard');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [broadcastText, setBroadcastText] = useState('');
   const [broadcastType, setBroadcastType] = useState<'info' | 'warning' | 'critical'>('warning');
@@ -223,7 +226,38 @@ export default function AdminView() {
           <AlertBanner broadcasts={state.broadcasts} />
         )}
 
-        {/* Stats Row */}
+        {/* Tab Bar */}
+        <div className="flex items-center gap-2 bg-gray-900/70 border border-gray-800 rounded-xl p-1">
+          {([
+            { key: 'dashboard', label: '🏠 Dashboard', id: 'admin-tab-dashboard' },
+            { key: 'audit', label: '📋 Audit Trail', id: 'admin-tab-audit' },
+            { key: 'analytics', label: '📊 Analytics', id: 'admin-tab-analytics' },
+          ] as const).map(tab => (
+            <button
+              key={tab.key}
+              id={tab.id}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === tab.key
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Audit Trail Tab */}
+        {activeTab === 'audit' && <AuditView />}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && <AnalyticsView />}
+
+        {/* Dashboard Tab */}
+        {activeTab === 'dashboard' && (
+        <>
+
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-white font-semibold text-lg">System Overview</h2>
           <button
@@ -564,6 +598,7 @@ export default function AdminView() {
             )}
           </div>
         </div>
+        </> )} {/* end dashboard tab */}
       </main>
 
       {/* AI Summary Modal */}

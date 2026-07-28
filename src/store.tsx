@@ -4,7 +4,7 @@ import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from './firebase';
 import {
   Incident, BroadcastMessage, Zone, ZoneId, BuildingStatus,
-  generateId, ZONES as INITIAL_ZONES, User, CheckInRecord, DEMO_USERS, CheckInRequest
+  generateId, ZONES as INITIAL_ZONES, User, CheckInRecord, DEMO_USERS, CheckInRequest, TimelineEntry
 } from './types';
 
 interface State {
@@ -29,6 +29,7 @@ interface StoreContextValue {
   setBuildingStatus: (zoneId: ZoneId, status: BuildingStatus) => void;
   addCheckIn: (record: CheckInRecord) => void;
   addCheckInRequest: (request: CheckInRequest) => void;
+  logTimelineEvent: (incidentId: string, entry: Omit<TimelineEntry, 'id'>) => Promise<void>;
   // Kept for type compatibility, though simulator logic should be disabled or adapted
   injectDemoIncidents: (incidents: Incident[]) => void;
   clearAllIncidents: () => void;
@@ -154,22 +155,66 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     signOut(auth);
   }, []);
 
+  const logTimelineEvent = useCallback(async (incidentId: string, entry: Omit<TimelineEntry, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'incidents', incidentId, 'timeline'), {
+        ...entry,
+        id: generateId(),
+      });
+    } catch (e) {
+      console.warn('Failed to log timeline event:', e);
+    }
+  }, []);
+
   const addIncident = useCallback(async (inc: Incident) => {
     // Write to Firestore using the generated ID as document ID
     await setDoc(doc(db, 'incidents', inc.id), inc);
-  }, []);
+    // Log timeline event
+    await logTimelineEvent(inc.id, {
+      action: 'created',
+      actorId: inc.reportedBy,
+      actorName: inc.reportedBy,
+      timestamp: inc.reportedAt,
+      newStatus: inc.status,
+    });
+  }, [logTimelineEvent]);
 
   const updateIncident = useCallback(async (id: string, updates: Partial<Incident>) => {
     await updateDoc(doc(db, 'incidents', id), { ...updates, updatedAt: Date.now() });
-  }, []);
+    // Log timeline event based on the update type
+    const currentInc = incidents.find(i => i.id === id);
+    let action: TimelineEntry['action'] = 'updated';
+    if (updates.status === 'acknowledged') action = 'acknowledged';
+    else if (updates.isEscalated) action = 'escalated';
+    else if (updates.responderResource) action = 'resource_assigned';
+    
+    await logTimelineEvent(id, {
+      action,
+      actorId: updates.acknowledgedBy || 'system',
+      actorName: updates.acknowledgedBy || 'System',
+      timestamp: Date.now(),
+      previousStatus: currentInc?.status,
+      newStatus: updates.status || currentInc?.status,
+      notes: updates.notes,
+    });
+  }, [logTimelineEvent, incidents]);
 
   const resolveIncident = useCallback(async (id: string) => {
+    const currentInc = incidents.find(i => i.id === id);
     await updateDoc(doc(db, 'incidents', id), {
       status: 'resolved',
       responseEndTime: Date.now(),
       updatedAt: Date.now()
     });
-  }, []);
+    await logTimelineEvent(id, {
+      action: 'resolved',
+      actorId: 'warden',
+      actorName: 'Warden',
+      timestamp: Date.now(),
+      previousStatus: currentInc?.status,
+      newStatus: 'resolved',
+    });
+  }, [logTimelineEvent, incidents]);
 
   const addBroadcast = useCallback(async (msg: BroadcastMessage) => {
     await setDoc(doc(db, 'broadcasts', msg.id), msg);
@@ -225,7 +270,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       value={{
         state, login, logout, addIncident, updateIncident, resolveIncident,
         addBroadcast, setZoneLockdown, setBuildingStatus,
-        injectDemoIncidents, clearAllIncidents, addCheckIn, addCheckInRequest
+        injectDemoIncidents, clearAllIncidents, addCheckIn, addCheckInRequest,
+        logTimelineEvent,
       }}
     >
       {children}

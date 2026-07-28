@@ -14,6 +14,170 @@ const port = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// ── Twilio Config ─────────────────────────────────────────────────────────────
+const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
+const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
+const TWILIO_FROM_NUMBER = process.env.TWILIO_FROM_NUMBER;
+
+let twilioClient = null;
+if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
+  const twilio = await import('twilio');
+  twilioClient = twilio.default(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+  console.log('   Twilio: ✅ Loaded');
+} else {
+  console.warn('   Twilio: ⚠️  Keys not set in server/.env (SMS disabled)');
+}
+
+async function sendSMS(to, body) {
+  if (!twilioClient) {
+    console.warn('[SMS] Twilio not configured — skipping SMS:', body);
+    return;
+  }
+  if (!to || !to.startsWith('+')) {
+    console.warn('[SMS] Invalid phone number format (must be E.164 like +91...):', to);
+    return;
+  }
+  try {
+    const msg = await twilioClient.messages.create({
+      body,
+      from: TWILIO_FROM_NUMBER,
+      to,
+    });
+    console.log(`[SMS] ✅ Sent to ${to}: ${msg.sid}`);
+  } catch (e) {
+    console.error(`[SMS] ❌ Failed to send to ${to}:`, e.message);
+  }
+}
+
+// ── Firebase Admin SDK for Polling ────────────────────────────────────────
+let adminDb = null;
+try {
+  const admin = await import('firebase-admin');
+  const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH
+    ? path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_PATH)
+    : path.join(__dirname, 'firebase-service-account.json');
+
+  const { createRequire } = await import('module');
+  const require = createRequire(import.meta.url);
+  const serviceAccount = require(serviceAccountPath);
+
+  if (!admin.default.apps.length) {
+    admin.default.initializeApp({
+      credential: admin.default.credential.cert(serviceAccount),
+    });
+  }
+  adminDb = admin.default.firestore();
+  console.log('   Firebase Admin: ✅ Connected');
+} catch (e) {
+  console.warn('   Firebase Admin: ⚠️  Not configured (SMS polling disabled). Add firebase-service-account.json.');
+}
+
+// ── SMS Notification Polling ──────────────────────────────────────────────────
+// In-memory sets to track already-notified incidents (prevents duplicate SMS)
+const notifiedNewIncidents = new Set();
+const notifiedEscalations = new Set();
+const notifiedLockdowns = new Set();
+
+async function pollFirestoreForNotifications() {
+  if (!adminDb || !twilioClient) return;
+
+  try {
+    // 1. New incidents → SMS to zone wardens
+    const incSnap = await adminDb.collection('incidents')
+      .where('status', '==', 'active')
+      .get();
+
+    for (const doc of incSnap.docs) {
+      const inc = doc.data();
+      if (!notifiedNewIncidents.has(doc.id)) {
+        notifiedNewIncidents.add(doc.id);
+        // Find wardens for this zone
+        const wardensSnap = await adminDb.collection('users')
+          .where('role', '==', 'warden')
+          .where('zone', '==', inc.zone)
+          .get();
+        for (const wSnap of wardensSnap.docs) {
+          const warden = wSnap.data();
+          if (warden.phoneNumber) {
+            await sendSMS(
+              warden.phoneNumber,
+              `🚨 Campus Alert: New ${inc.type} incident reported in ${inc.zone} zone. Severity: ${inc.severity}. Open the app to respond immediately.`
+            );
+          }
+        }
+      }
+
+      // 2. Escalations → SMS to admins
+      if (inc.isEscalated && !notifiedEscalations.has(doc.id)) {
+        notifiedEscalations.add(doc.id);
+        const adminsSnap = await adminDb.collection('users')
+          .where('role', '==', 'admin')
+          .get();
+        for (const aSnap of adminsSnap.docs) {
+          const admin = aSnap.data();
+          if (admin.phoneNumber) {
+            await sendSMS(
+              admin.phoneNumber,
+              `⚡ ESCALATION ALERT: A ${inc.type} incident in ${inc.zone} zone has been escalated to CRITICAL by the Warden. Immediate Admin action required.`
+            );
+          }
+        }
+      }
+    }
+
+    // 3. Lockdowns → SMS to students in that zone
+    const zonesSnap = await adminDb.collection('zones')
+      .where('isLockdown', '==', true)
+      .get();
+
+    for (const zDoc of zonesSnap.docs) {
+      const zoneId = zDoc.id;
+      if (!notifiedLockdowns.has(zoneId)) {
+        notifiedLockdowns.add(zoneId);
+        const studentsSnap = await adminDb.collection('users')
+          .where('role', '==', 'student')
+          .where('zone', '==', zoneId)
+          .get();
+        for (const sSnap of studentsSnap.docs) {
+          const student = sSnap.data();
+          if (student.phoneNumber) {
+            await sendSMS(
+              student.phoneNumber,
+              `🔒 LOCKDOWN ALERT [★ ${zoneId.toUpperCase()} ZONE]: Campus lockdown in effect. Stay in place, lock doors, do not leave until all-clear. Open the Campus Alert app for updates.`
+            );
+          }
+        }
+      } 
+    }
+
+    // Clear resolved lockdown notifications (so re-locking will re-notify)
+    const allZonesSnap = await adminDb.collection('zones').get();
+    for (const zDoc of allZonesSnap.docs) {
+      if (!zDoc.data().isLockdown) {
+        notifiedLockdowns.delete(zDoc.id);
+      }
+    }
+
+  } catch (e) {
+    console.error('[SMS Polling] Error:', e.message);
+  }
+}
+
+// Poll every 5 seconds
+if (adminDb && twilioClient) {
+  setInterval(pollFirestoreForNotifications, 5000);
+  console.log('   SMS Polling: ✅ Active (every 5s)');
+}
+
+// ── Manual SMS Trigger Endpoints ─────────────────────────────────────────────
+app.post('/api/notify/test-sms', async (req, res) => {
+  const { phoneNumber } = req.body;
+  if (!phoneNumber) return res.status(400).json({ error: 'phoneNumber required' });
+  await sendSMS(phoneNumber, '🚨 TEST SMS: Campus Alert System is connected and working!');
+  res.json({ sent: true });
+});
+
+
 // ── OpenRouter Config ─────────────────────────────────────────────────────────
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_BASE = 'https://openrouter.ai/api/v1/chat/completions';
@@ -204,6 +368,7 @@ app.get('/api/health', (req, res) => {
 app.listen(port, () => {
   console.log(`\n🚨 Campus Alert Backend on port ${port}`);
   console.log(`   OpenRouter Key: ${OPENROUTER_API_KEY ? '✅ Loaded' : '❌ Missing'}`);
+  console.log(`   Twilio SMS: ${twilioClient ? '✅ Enabled' : '⚠️  Disabled (add keys to server/.env)'}`);
   console.log(`   AI Models (in priority): ${AI_MODELS.join(' → ')}\n`);
 });
 
