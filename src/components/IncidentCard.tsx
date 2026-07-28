@@ -10,6 +10,36 @@ import {
 } from '../types';
 import { useStore } from '../store';
 
+// Helper to play base64 media correctly in Chrome
+const ObjectUrlMedia = ({ src, type, ...props }: any) => {
+  const [url, setUrl] = useState<string>(src);
+
+  useEffect(() => {
+    if (src && src.startsWith('data:')) {
+      try {
+        const parts = src.split(';');
+        const mime = parts[0].split(':')[1];
+        const bstr = atob(parts[1].split(',')[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        const blob = new Blob([u8arr], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        setUrl(blobUrl);
+        return () => URL.revokeObjectURL(blobUrl);
+      } catch (e) {
+        setUrl(src);
+      }
+    } else {
+      setUrl(src);
+    }
+  }, [src]);
+
+  return type === 'video' ? <video src={url} {...props} /> : <audio src={url} {...props} />;
+};
+
 // ── Static config ─────────────────────────────────────────────────────────────
 
 const TYPE_ICONS: Record<string, string> = {
@@ -137,7 +167,8 @@ function MediaSection({ incident }: { incident: Incident }) {
               onClick={() => setModalOpen(null)}
             >
               <div className="relative" onClick={(e) => e.stopPropagation()}>
-                <video
+                <ObjectUrlMedia
+                  type="video"
                   src={incident.mediaUrl}
                   controls
                   autoPlay
@@ -164,7 +195,7 @@ function MediaSection({ incident }: { incident: Incident }) {
             <span className="text-xs">🎙️</span>
             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Audio Report</span>
           </div>
-          <audio src={incident.audioUrl} controls className="h-6 w-48 opacity-90 scale-90 origin-left" />
+          <ObjectUrlMedia type="audio" src={incident.audioUrl} controls className="h-6 w-48 opacity-90 scale-90 origin-left" />
         </div>
       )}
     </div>

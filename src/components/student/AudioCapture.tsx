@@ -32,16 +32,18 @@ export default function AudioCapture({ incidentId, durationMs = 20000, onComplet
 
         recorder.onstop = async () => {
           const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-          // Create local URL for demo purposes.
-          // In a production app, this would be uploaded to Firebase Storage here.
-          const url = URL.createObjectURL(blob);
           
-          await updateIncident(incidentId, { audioUrl: url });
-          if (onComplete) onComplete(url);
-
-          // Stop all tracks
-          stream.getTracks().forEach(track => track.stop());
-          setIsRecording(false);
+          const reader = new FileReader();
+          reader.onloadend = async () => {
+            const base64data = reader.result as string;
+            await updateIncident(incidentId, { audioUrl: base64data });
+            if (onComplete) onComplete(base64data);
+            
+            // Stop all tracks
+            stream.getTracks().forEach(track => track.stop());
+            setIsRecording(false);
+          };
+          reader.readAsDataURL(blob);
         };
 
         recorder.start();
