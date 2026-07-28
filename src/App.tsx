@@ -92,11 +92,6 @@ function SimulatedApp() {
   const { state, clearAllIncidents } = useStore();
   const role = state.currentUser?.role;
 
-  // Clear the system on every refresh as requested for a clean testing slate
-  useEffect(() => {
-    clearAllIncidents();
-  }, [clearAllIncidents]);
-
   // Calculate highest active threat
   const activeIncidents = state.incidents.filter(i => i.status === 'active');
   const hasCritical = activeIncidents.some(i => i.severity === 'critical');

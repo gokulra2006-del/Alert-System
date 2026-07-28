@@ -20,6 +20,11 @@ export default function WardenView() {
   const [broadcastType, setBroadcastType] = useState<'info' | 'warning' | 'critical'>('info');
   const [showBroadcastForm, setShowBroadcastForm] = useState(false);
 
+  // AI Summary state
+  const [aiSummary, setAiSummary] = useState('');
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+
   const lockedZones = state.zones.filter((z) => z.isLockdown);
 
   const filteredIncidents = state.incidents.filter((inc) =>
@@ -73,6 +78,36 @@ export default function WardenView() {
     addBroadcast(msg);
     setBroadcastText('');
     setShowBroadcastForm(false);
+  }
+
+  async function handleGenerateSummary() {
+    setIsGeneratingSummary(true);
+    setShowSummaryModal(true);
+    setAiSummary('');
+
+    try {
+      const activeData = activeIncidents.map(i => ({
+        type: i.type,
+        severity: i.severity,
+        zone: i.zone,
+        description: i.description
+      }));
+      const res = await fetch('http://localhost:3001/api/ai/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ incidentsData: activeData })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAiSummary(data.summary);
+      } else {
+        setAiSummary('Failed to generate summary.');
+      }
+    } catch (e) {
+      setAiSummary('Error connecting to AI service.');
+    } finally {
+      setIsGeneratingSummary(false);
+    }
   }
 
   return (
@@ -235,12 +270,20 @@ export default function WardenView() {
                 {activeIncidents.length} active
               </span>
             </h2>
-            <button
-              onClick={() => setShowBroadcastForm(!showBroadcastForm)}
-              className="text-xs px-3 py-1.5 rounded-lg bg-amber-900/40 text-amber-400 border border-amber-800 hover:bg-amber-900/60 transition-colors font-semibold flex items-center gap-1.5"
-            >
-              📢 Broadcast
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleGenerateSummary}
+                className="text-xs px-3 py-1.5 rounded-lg bg-indigo-900/40 text-indigo-300 border border-indigo-800 hover:bg-indigo-900/60 transition-colors font-semibold flex items-center gap-1.5"
+              >
+                <span>✨</span> AI Briefing
+              </button>
+              <button
+                onClick={() => setShowBroadcastForm(!showBroadcastForm)}
+                className="text-xs px-3 py-1.5 rounded-lg bg-amber-900/40 text-amber-400 border border-amber-800 hover:bg-amber-900/60 transition-colors font-semibold flex items-center gap-1.5"
+              >
+                📢 Broadcast
+              </button>
+            </div>
           </div>
 
           {/* Broadcast Form */}
@@ -329,6 +372,38 @@ export default function WardenView() {
           </div>
         </div>
       </div>
+      {/* AI Summary Modal */}
+      {showSummaryModal && (
+        <div className="fixed inset-0 z-[200] bg-black/80 flex items-center justify-center backdrop-blur-sm px-4">
+          <div className="bg-gray-900 border border-indigo-500/30 rounded-2xl p-6 max-w-lg w-full shadow-[0_0_30px_rgba(99,102,241,0.15)] animate-fade-in-up">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-800">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">✨</span>
+                <h3 className="text-white font-bold text-lg">AI Situation Briefing</h3>
+              </div>
+              <button
+                onClick={() => setShowSummaryModal(false)}
+                className="text-gray-500 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="min-h-[100px] flex items-center justify-center">
+              {isGeneratingSummary ? (
+                <div className="flex flex-col items-center gap-3 text-indigo-400">
+                  <span className="animate-spin text-2xl">⏳</span>
+                  <span className="text-sm font-semibold animate-pulse">Analyzing incident data...</span>
+                </div>
+              ) : (
+                <p className="text-gray-300 text-sm leading-relaxed">
+                  {aiSummary}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
