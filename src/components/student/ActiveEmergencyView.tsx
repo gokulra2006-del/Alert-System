@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '../../store';
 import { IncidentType } from '../../types';
 import MediaCapture from './MediaCapture';
@@ -112,8 +113,8 @@ export default function ActiveEmergencyView({ incidentId, type, onResolve }: Pro
     other: '⚠️'
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] bg-[#0a0e1a] flex flex-col animate-fade-in-up overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-[#0a0e1a] flex flex-col animate-fade-in-up overflow-y-auto">
       {/* Header */}
       <div className={`${headerColors[type] || headerColors.other} text-white px-6 py-8 flex flex-col items-center justify-center shadow-lg relative`}>
         <div className="text-5xl mb-2 animate-bounce">{headerIcons[type] || headerIcons.other}</div>
@@ -191,6 +192,7 @@ export default function ActiveEmergencyView({ incidentId, type, onResolve }: Pro
         )}
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
