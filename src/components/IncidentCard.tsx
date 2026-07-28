@@ -366,7 +366,7 @@ export default function IncidentCard({
               Acknowledge
             </button>
           )}
-          {onEscalate && incident.status !== 'resolved' && (
+          {onEscalate && incident.status !== 'resolved' && !incident.isEscalated && (
             <button
               onClick={() => onEscalate(incident.id)}
               className="text-xs px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors"
