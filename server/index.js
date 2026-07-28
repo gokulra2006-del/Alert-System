@@ -206,3 +206,5 @@ app.listen(port, () => {
   console.log(`   OpenRouter Key: ${OPENROUTER_API_KEY ? '✅ Loaded' : '❌ Missing'}`);
   console.log(`   AI Models (in priority): ${AI_MODELS.join(' → ')}\n`);
 });
+
+export default app;
