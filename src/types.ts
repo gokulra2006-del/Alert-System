@@ -267,7 +267,7 @@ export function formatDuration(ms: number): string {
 
 // ── Demo Users ───────────────────────────────────────────────────────────────
 export const DEMO_USERS: User[] = [
-  { id: 'U_S1', name: 'Arjun Mehta', email: 'student1@vitchennai.edu', passwordHash: 'pwd', role: 'student', zone: 'north' },
+  { id: 'U_S1', name: 'Gokul', email: 'student1@vitchennai.edu', passwordHash: 'pwd', role: 'student', zone: 'north' },
   { id: 'U_S2', name: 'Priya Rajan', email: 'student2@vitchennai.edu', passwordHash: 'pwd', role: 'student', zone: 'south' },
   { id: 'U_S3', name: 'Karthik Nair', email: 'student3@vitchennai.edu', passwordHash: 'pwd', role: 'student', zone: 'east' },
   { id: 'U_S4', name: 'Divya Sharma', email: 'student4@vitchennai.edu', passwordHash: 'pwd', role: 'student', zone: 'west' },
