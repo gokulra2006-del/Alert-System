@@ -31,7 +31,7 @@ interface StoreContextValue {
   addCheckInRequest: (request: CheckInRequest) => void;
   // Kept for type compatibility, though simulator logic should be disabled or adapted
   injectDemoIncidents: (incidents: Incident[]) => void;
-  clearDemoIncidents: () => void;
+  clearAllIncidents: () => void;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -192,11 +192,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     newIncidents.forEach(inc => setDoc(doc(db, 'incidents', inc.id), inc));
   }, []);
 
-  const clearDemoIncidents = useCallback(async () => {
-    const q = query(collection(db, 'incidents'), where('isDemoInjected', '==', true));
+  const clearAllIncidents = useCallback(async () => {
+    const q = query(collection(db, 'incidents'));
     const snapshot = await getDocs(q);
     const batch = writeBatch(db);
     snapshot.docs.forEach((d) => batch.delete(d.ref));
+    
+    // Also clear broadcasts to completely reset the system
+    const bq = query(collection(db, 'broadcasts'));
+    const bSnapshot = await getDocs(bq);
+    bSnapshot.docs.forEach((d) => batch.delete(d.ref));
+    
     await batch.commit();
   }, []);
 
@@ -219,7 +225,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       value={{
         state, login, logout, addIncident, updateIncident, resolveIncident,
         addBroadcast, setZoneLockdown, setBuildingStatus,
-        injectDemoIncidents, clearDemoIncidents, addCheckIn, addCheckInRequest
+        injectDemoIncidents, clearAllIncidents, addCheckIn, addCheckInRequest
       }}
     >
       {children}
