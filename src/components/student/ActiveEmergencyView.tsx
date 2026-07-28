@@ -124,13 +124,13 @@ export default function ActiveEmergencyView({ incidentId, type, onResolve }: Pro
         
         <button 
           onClick={onResolve}
-          className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white rounded-full p-2 transition-colors"
+          className="absolute top-4 right-4 flex items-center gap-1.5 bg-black/20 hover:bg-black/40 text-white rounded-full px-4 py-2 transition-all z-50 backdrop-blur-sm shadow-lg border border-white/20 font-bold tracking-wide"
         >
-          ✕
+          <span>✕</span> Close
         </button>
       </div>
 
-      <div className="flex-1 p-5 flex flex-col gap-6 max-w-lg mx-auto w-full pb-20">
+      <div className="flex-1 p-5 flex flex-col gap-6 max-w-lg mx-auto w-full pb-20 relative">
         
         {/* Media Capture Section */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 shadow-xl">
