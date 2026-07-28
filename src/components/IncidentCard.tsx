@@ -273,6 +273,11 @@ export default function IncidentCard({
           </div>
         </div>
         <div className="flex flex-col items-end gap-1">
+          {incident.isEscalated && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-600 text-white shadow-[0_0_8px_rgba(220,38,38,0.8)] animate-pulse">
+              ESCALATED
+            </span>
+          )}
           <span
             className="text-xs font-bold px-2 py-0.5 rounded-full"
             style={{ background: `${sevColor}22`, color: sevColor, border: `1px solid ${sevColor}55` }}
@@ -293,6 +298,13 @@ export default function IncidentCard({
 
       {!compact && incident.type !== 'elevator' && (
         <p className="text-sm text-gray-300 leading-snug">{incident.description}</p>
+      )}
+
+      {incident.isEscalated && incident.notes && (
+        <div className="bg-red-900/30 border border-red-800 rounded-lg p-2.5 mt-1">
+          <p className="text-xs text-red-300 font-medium">⚠️ Escalation Note:</p>
+          <p className="text-sm text-red-200 mt-0.5">{incident.notes}</p>
+        </div>
       )}
 
       {!compact && incident.type === 'elevator' && (

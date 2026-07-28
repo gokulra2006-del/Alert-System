@@ -29,8 +29,10 @@ export interface Incident {
   reportedAt: number;  // epoch ms
   updatedAt: number;
   acknowledgedBy?: string;
-  notes?: string;
+  resolvedBy?: string;
+  isEscalated?: boolean;
   isSOS?: boolean;
+  notes?: string;
   isDemoInjected?: boolean;          // Feature 10: demo scenario cleanup flag
 
   // Feature 1 — Media capture

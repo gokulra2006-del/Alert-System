@@ -53,6 +53,8 @@ export default function WardenView() {
   function handleEscalate(id: string) {
     updateIncident(id, {
       status: 'active',
+      severity: 'critical',
+      isEscalated: true,
       notes: 'Escalated by Warden — requires Admin attention',
       acknowledgedBy: 'Warden',
     });
