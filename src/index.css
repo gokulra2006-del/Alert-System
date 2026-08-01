@@ -49,6 +49,11 @@ body {
   display: none !important;
 }
 
+/* ── Dark Mode Map Tiles ──────────────────────────────────────────────────── */
+.dark-map-tiles {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+
 /* ── SOS pulse (idle floating button) ─────────────────────────────────────── */
 @keyframes sos-pulse {
   0%   { box-shadow: 0 0 0 0   rgba(220,38,38,0.7),  0 4px 24px rgba(0,0,0,0.5); }
@@ -103,6 +108,19 @@ body {
 @keyframes shimmer {
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(100%);  }
+}
+
+/* ── Sweeping glow for slide-to-dispatch ────────────────────────────────── */
+@keyframes sweep {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.animate-sweep {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+  background-size: 200% auto;
+  animation: sweep 2s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* ── Scrollbar ────────────────────────────────────────────────────────────── */

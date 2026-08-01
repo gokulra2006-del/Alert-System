@@ -9,6 +9,7 @@ import SilentSOS from './SilentSOS';
 import ReportDrawer from './ReportDrawer';
 import LockdownBanner from './LockdownBanner';
 import ActiveEmergencyView from './ActiveEmergencyView';
+import LoginOverlay from './LoginOverlay';
 import { IncidentType } from '../../types';
 
 // ── Button configs ────────────────────────────────────────────────────────────
@@ -48,6 +49,7 @@ export default function StudentView() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeIncidentId, setActiveIncidentId] = useState<string | null>(null);
   const [activeIncidentType, setActiveIncidentType] = useState<IncidentType | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const activeCount = state.incidents.filter((i) => i.status === 'active').length;
 
@@ -64,6 +66,10 @@ export default function StudentView() {
         }}
       />
     );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginOverlay onLogin={() => setIsAuthenticated(true)} />;
   }
 
   return (
@@ -106,15 +112,16 @@ export default function StudentView() {
         {/* ── TIER 3 trigger ── Report Something Else ──────────────────────── */}
         <button
           onClick={() => setDrawerOpen(true)}
-          className="w-full py-3.5 bg-gray-800/80 hover:bg-gray-700/80
-            border border-gray-700 hover:border-gray-500
-            text-gray-300 font-medium rounded-xl transition-all text-sm
-            flex items-center justify-center gap-2"
+          className="group w-full py-4 bg-gradient-to-r from-gray-900/90 to-gray-800/90 hover:from-gray-800 hover:to-gray-700 
+            border border-gray-700/50 hover:border-gray-400/50
+            text-gray-200 font-semibold rounded-2xl transition-all duration-300 ease-out text-sm
+            flex items-center justify-center gap-3 backdrop-blur-md shadow-lg shadow-black/40 relative overflow-hidden"
         >
-          <span>📝</span>
-          Report Something Else
-          <span className="text-gray-600 text-xs ml-1">
-            (Hazmat / Other)
+          <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <span className="text-lg group-hover:scale-110 transition-transform duration-300">📝</span>
+          <span className="tracking-wide">Report Something Else</span>
+          <span className="text-gray-500 text-xs ml-1 font-medium bg-black/40 px-2 py-0.5 rounded-full border border-gray-800">
+            Hazmat / Other
           </span>
         </button>
 
@@ -155,11 +162,15 @@ export default function StudentView() {
 
         {/* Active incidents preview */}
         {activeCount > 0 && (
-          <div className="bg-gray-900/60 border border-gray-800/80 rounded-xl p-3">
-            <p className="text-xs text-gray-600 font-semibold uppercase tracking-wider mb-2">
-              Currently Active
-            </p>
-            <div className="flex flex-col gap-1.5">
+          <div className="bg-[#0a0e1a]/80 backdrop-blur-xl border border-blue-900/30 rounded-2xl p-4 shadow-2xl shadow-blue-900/10">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-blue-400 font-extrabold uppercase tracking-widest flex items-center gap-2">
+                <span className="stat-blink w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                Live HUD
+              </p>
+              <span className="text-[10px] bg-blue-950/50 text-blue-300 px-2 py-1 rounded-md border border-blue-800/50 font-bold">{activeCount} ACTIVE</span>
+            </div>
+            <div className="flex flex-col gap-2">
               {state.incidents
                 .filter((i) => i.status === 'active')
                 .slice(0, 4)

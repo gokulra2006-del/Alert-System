@@ -361,6 +361,67 @@ Make it sound highly professional, urgent, and specific.`,
   }
 });
 
+// ── POST /api/ai/draft-broadcast ────────────────────────────────────────────
+app.post('/api/ai/draft-broadcast', async (req, res) => {
+  try {
+    const { prompt, type } = req.body;
+    if (!prompt) return res.status(400).json({ error: 'prompt is required' });
+
+    const { content, model } = await callAI({
+      systemPrompt: `You are the automated emergency communications AI for a university campus.
+Your job is to take a rough prompt from a security warden and turn it into a calm, professional, and clear emergency SMS broadcast.
+Keep it under 160 characters if possible. It must sound highly official.
+Return ONLY a valid JSON object with key "draft" containing the text string.`,
+      userPrompt: `Warden Prompt: "${prompt}"\nBroadcast Type: ${type}`,
+      jsonMode: true,
+    });
+
+    const result = JSON.parse(content);
+    res.json({ draft: result.draft, model });
+  } catch (error) {
+    console.error('draft-broadcast error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ── POST /api/ai/generate-report ────────────────────────────────────────────
+app.post('/api/ai/generate-report', async (req, res) => {
+  try {
+    const { incident } = req.body;
+    if (!incident) return res.status(400).json({ error: 'incident data is required' });
+
+    const { content, model } = await callAI({
+      systemPrompt: `You are the automated compliance AI for a university campus.
+Write a formal, comprehensive Post-Incident Report based on the provided incident data.
+The report should include:
+- Executive Summary
+- Incident Timeline
+- Impact & Response
+- Recommended Preventative Measures
+Format the response in cleanly structured Markdown. Do not use JSON.`,
+      userPrompt: `Incident Data:\n${JSON.stringify(incident, null, 2)}`,
+      jsonMode: false,
+    });
+
+    res.json({ report: content, model });
+  } catch (error) {
+    console.error('generate-report error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ── POST /api/iot/sos ───────────────────────────────────────────────────────
+app.post('/api/iot/sos', async (req, res) => {
+  try {
+    const { poleId, zone, coordinates } = req.body;
+    // In a real deployment, this pushes a critical incident to Firestore
+    console.log(`[IoT] 🚨 Emergency triggered at Smart Pole ${poleId} in ${zone} zone.`);
+    res.json({ success: true, message: 'IoT SOS registered and dispatched.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', models: AI_MODELS, hasKey: !!OPENROUTER_API_KEY });
 });

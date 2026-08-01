@@ -8,11 +8,9 @@ import {
   ZONES,
   generateId,
 } from '../types';
-
 const TYPES: IncidentType[] = ['fire', 'medical', 'security', 'other'];
 const SEVERITIES: Severity[] = ['low', 'medium', 'high', 'critical'];
 const ZONE_IDS: ZoneId[] = ['north', 'south', 'east', 'west'];
-
 function randItem<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }

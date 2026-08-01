@@ -225,6 +225,8 @@ export default function IncidentCard({
 }: Props) {
   const [aiPlan, setAiPlan] = React.useState<{ title: string; detail: string }[] | null>(null);
   const [loadingPlan, setLoadingPlan] = React.useState(false);
+  const [aiReport, setAiReport] = React.useState<string | null>(null);
+  const [loadingReport, setLoadingReport] = React.useState(false);
   const { updateIncident } = useStore();
   const color = INCIDENT_COLORS[incident.type];
   const sevColor = SEVERITY_COLORS[incident.severity];
@@ -548,6 +550,49 @@ export default function IncidentCard({
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* AI Post-Incident Report Button & Display */}
+      {incident.status === 'resolved' && (
+        <div className="border-t border-gray-700/60 pt-3 mt-1">
+          <button
+            onClick={async () => {
+              if (aiReport) {
+                setAiReport(null);
+                return;
+              }
+              setLoadingReport(true);
+              try {
+                const res = await fetch('/api/ai/generate-report', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ incident }),
+                });
+                const data = await res.json();
+                if (data.report) setAiReport(data.report);
+              } catch (e) {
+                console.error(e);
+              }
+              setLoadingReport(false);
+            }}
+            className="w-full flex justify-center items-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all border border-emerald-900/50 text-emerald-400 hover:bg-emerald-900/20"
+          >
+            {loadingReport ? (
+              <span className="animate-pulse">Generating Official Report...</span>
+            ) : aiReport ? (
+              <><span>Hide Report</span></>
+            ) : (
+              <><span>📄</span> <span>Generate Post-Incident Report (AI)</span></>
+            )}
+          </button>
+
+          {/* AI Report Display Area */}
+          {aiReport && (
+            <div className="mt-3 bg-gray-950 border border-emerald-900/50 rounded-xl p-4 animate-fade-in-up text-left text-emerald-100/80 text-[11px] overflow-auto max-h-60 leading-relaxed shadow-inner">
+               <pre className="whitespace-pre-wrap font-sans">{aiReport}</pre>
             </div>
           )}
         </div>

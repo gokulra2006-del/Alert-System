@@ -123,18 +123,18 @@ export default function EmergencyButton({ config, onDispatch }: Props) {
     >
       <div
         ref={containerRef}
-        className="relative overflow-hidden rounded-2xl h-24 flex items-center justify-center text-white transition-all will-change-transform"
+        className="relative overflow-hidden rounded-2xl h-24 flex items-center justify-center text-white transition-all will-change-transform backdrop-blur-xl"
         style={{
           background: isSuccess
-            ? '#064e3b' // Dark green on success
-            : 'rgba(255,255,255,0.03)',
+            ? 'linear-gradient(135deg, rgba(6,78,59,0.9), rgba(6,78,59,0.6))'
+            : 'linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01))',
           border: `1px solid ${
-            isSuccess ? '#10b981' : 'rgba(255,255,255,0.08)'
+            isSuccess ? 'rgba(16,185,129,0.5)' : 'rgba(255,255,255,0.1)'
           }`,
           boxShadow:
             btnState === 'success'
-              ? `0 0 30px rgba(16,185,129,0.2), inset 0 1px 0 rgba(255,255,255,0.1)`
-              : `0 4px 15px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)`,
+              ? `0 0 40px rgba(16,185,129,0.4), inset 0 1px 0 rgba(255,255,255,0.2)`
+              : `0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)`,
           cursor: btnState === 'idle' ? 'grab' : 'default',
         }}
         onPointerDown={handlePointerDown}
@@ -147,11 +147,11 @@ export default function EmergencyButton({ config, onDispatch }: Props) {
           <div
             className="absolute top-0 left-0 h-full ease-out transition-transform"
             style={{
-              background: `linear-gradient(145deg, ${config.bg}f0, ${config.bg}b0)`,
+              background: `linear-gradient(135deg, ${config.bg}ff, ${config.bg}80)`,
               width: '100%',
               transform: `translateX(${progress - 100}%)`,
               transitionDuration: isDragging ? '0ms' : '300ms',
-              boxShadow: `0 4px 22px ${config.glow}, inset 0 1px 0 rgba(255,255,255,0.18)`,
+              boxShadow: `0 0 40px ${config.glow}, inset 0 1px 0 rgba(255,255,255,0.3), inset -2px 0 10px rgba(0,0,0,0.2)`,
             }}
           />
         )}
@@ -168,17 +168,17 @@ export default function EmergencyButton({ config, onDispatch }: Props) {
         )}
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-[30px] leading-none mb-1">
+        <div className="relative z-10 flex flex-col items-center justify-center pointer-events-none drop-shadow-lg">
+          <span className="text-[32px] leading-none mb-1 drop-shadow-md">
             {isSuccess ? '✓' : config.icon}
           </span>
-          <span className="text-[15px] font-bold tracking-wide">
-            {isSuccess ? 'Reported ✓' : isLoading ? 'Sending…' : config.label}
+          <span className="text-[16px] font-extrabold tracking-widest uppercase">
+            {isSuccess ? 'Reported' : isLoading ? 'Sending…' : config.label}
           </span>
           {!isSuccess && !isLoading && (
-            <span className="text-[10px] text-gray-400 font-semibold mt-0.5 flex items-center gap-1 opacity-80">
+            <span className="text-[11px] font-bold mt-1 flex items-center gap-1 uppercase tracking-wider animate-sweep">
               Slide to dispatch 
-              <span className="animate-pulse">→</span>
+              <span className="animate-pulse ml-1 text-white">→</span>
             </span>
           )}
         </div>
